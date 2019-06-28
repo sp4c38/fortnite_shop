@@ -1,5 +1,6 @@
 import datetime
 import os
+import PIL
 import random
 import requests
 import shutil
@@ -20,7 +21,7 @@ requests_session = requests.Session()
 store_files = []
 
 # Give api key with in header (must be 'headers' in request)
-data = (requests_session.get(url, headers = headers)).json()
+data = (requests_session.get(url=url, headers=headers)).json()
 store_links = []
 
 for item in data['data']:
@@ -28,8 +29,6 @@ for item in data['data']:
 
 date = datetime.date.today().timetuple()
 dir_created_date = "_".join([str(date.tm_mday), str(date.tm_mon), str(date.tm_year)])
-
-shutil.rmtree((expanduser(store_path)+f'/{dir_created_date}'))
 
 if not os.path.exists(path=(expanduser(f'{store_path}/{dir_created_date}'))):
     os.makedirs(name=(expanduser(f'{store_path}/{dir_created_date}')))
@@ -47,8 +46,7 @@ for link in store_links:
     with open(imagefile_path, 'wb') as f:
         image = requests_session.get(url=link)
         f.write(image.content)
-        print(f"Successfully wrote image to: {imagefile_path}")
-        
+        print(f"Successfully wrote image to: {imagefile_path}")    
 
 for i in store_files:
     header = {
