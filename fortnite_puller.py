@@ -109,3 +109,13 @@ foreground = rows_to_one(rows=row_imgs)
 final = Image.new(color=final_img_bg, size=(int(foreground.width/2), int(foreground.height/2)), mode='RGBA')
 foreground = foreground.resize(size=(int(foreground.width/2), int(foreground.height/2)))
 final.paste(im=foreground,box=(0,0),mask=foreground)
+final.save(fp=expanduser(f'{store_path}/{dir_created_date}/final.png'))
+
+files = {
+    'photo':open(expanduser(f'{store_path}/{dir_created_date}/final.png'),'rb')
+}
+photo_data = {
+    'chat_id':chat_id,
+}
+# import IPython;IPython.embed();sys.exit()
+requests.post(url=send_photo_link, data=photo_data, files=files)
