@@ -1,8 +1,10 @@
 import datetime
+import glob
 import io
 import os
 import random
 import requests
+import hashlib
 import shutil
 import tempfile
 
@@ -12,7 +14,6 @@ from os.path import expanduser
 # Put in credentials file later
 chat_id = '-1001269378894'
 send_photo_link = 'https://api.telegram.org/bot723477855:AAEPsApC9-UXtWZ7QWZxndvRuY8ZXQoXM1g/sendPhoto'
-store_path = '~/Documents/fortnite_shop'
 
 shop_url = 'https://fnbr.co/api/shop'
 headers = {
@@ -23,6 +24,10 @@ headers = {
 requests_session = requests.Session()
 
 # Change some stuff here if ya want to
+
+# Some general settings
+store_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop'))
+store_path_final = expanduser(os.path.join('~', 'Documents', 'fortnite_shop' , '{0}', 'final.png'))
 
 # Settings for images next to each other in a row
 row_images_next_to_each_other = 4 # How many images shall be next to each other?
@@ -47,16 +52,15 @@ for item in data['data']['daily']:
 
 # Creates name for directory (with date)
 date = datetime.date.today().timetuple()
-dir_created_date = "_".join([str(date.tm_mday), str(date.tm_mon), str(date.tm_year)])
+dir_name = "_".join([str(date.tm_mday), str(date.tm_mon), str(date.tm_year)])
 
-# Overwork later 
-if not os.path.exists(path=(expanduser(f'{store_path}/{dir_created_date}'))):
-    os.makedirs(name=(expanduser(f'{store_path}/{dir_created_date}')))
+if not os.path.exists(path=(f'{store_path}/{dir_name}')):
+    os.makedirs(name=(f'{store_path}/{dir_name}'))
 
 def generate_mkstemp():
     # Generate a preferably unique name for a file
     imagefile_path = ((tempfile.mkstemp(prefix='fn_', suffix='.png',
-                        dir=(expanduser('{0}/{1}'.format(store_path, dir_created_date)))))[1])
+                        dir=(os.path.join(store_path, dir_name)))))[1]
     return imagefile_path
 
 print('Downloading...')
@@ -79,6 +83,7 @@ def img_to_row(img_list):
     row_img = Image.new(mode='RGBA', size=((len(img_list)*width), height), color=(255,255,255))
     x_paste=0
     y_paste=0
+
     for image in img_list:
         image = image.resize(size=(width,height))
         row_img.paste(im=image, box=(x_paste, y_paste))
@@ -101,7 +106,7 @@ while len(images) > 0:
     images_sliced.append(first_items(items_list=images, number=row_images_next_to_each_other))
 
 row_imgs = []
-# import IPython;IPython.embed();import sys;sys.exit()
+
 for item in images_sliced:
     row_imgs.append(img_to_row(img_list=item))
 
@@ -109,13 +114,39 @@ foreground = rows_to_one(rows=row_imgs)
 final = Image.new(color=final_img_bg, size=(int(foreground.width/2), int(foreground.height/2)), mode='RGBA')
 foreground = foreground.resize(size=(int(foreground.width/2), int(foreground.height/2)))
 final.paste(im=foreground,box=(0,0),mask=foreground)
-final.save(fp=expanduser(f'{store_path}/{dir_created_date}/final.png'))
+temp_file_path = tempfile.mkstemp(suffix='.png')[1]
+final.save(fp=temp_file_path)
 
-files = {
-    'photo':open(expanduser(f'{store_path}/{dir_created_date}/final.png'),'rb')
-}
-photo_data = {
-    'chat_id':chat_id,
-}
-# import IPython;IPython.embed();sys.exit()
-requests.post(url=send_photo_link, data=photo_data, files=files)
+def check_if_changed(final_img, saved_imgs_path):
+    # First get the latest created directory and than in this directory to latest created file
+    dirs = glob.glob(os.path.join(saved_imgs_path, '*'))
+    newest_dir = max(dirs, key=(os.path.getctime))
+    files = glob.glob(os.path.join(newest_dir, '*'))
+
+    if not files:
+        newest_file = sorted(files, key=os.path.getmtime, reverse=True)
+        saved_file_hash = None
+    else:
+        newest_file = sorted(files, key=os.path.getmtime, reverse=True)[0]
+        saved_file_hash = hashlib.sha256(open(newest_file, 'rb').read()).hexdigest()
+
+    pulled_file_hash = hashlib.sha256(open(temp_file_path, 'rb').read()).hexdigest()
+
+    if saved_file_hash == pulled_file_hash:
+        print("No new fortnite shop found. Still the same.")
+    else:
+        print("Found new fortnite shop.")
+        final.save(fp=store_path_final.format(dir_name))
+
+        files = {
+            'photo':open(os.path.join(store_path_final.format(dir_name)),'rb')
+        }
+        header = {
+            'chat_id':chat_id,
+        }
+        requests.post(url=send_photo_link, data=header, files=files)
+
+# Checks if the latest stored image is the same as this one pulled
+# If so, don't have tp send it again
+check_if_changed(final_img=final, saved_imgs_path=store_path)
+
