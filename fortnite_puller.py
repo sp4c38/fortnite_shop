@@ -34,7 +34,7 @@ row_images_next_to_each_other = 4 # How many images shall be next to each other?
 width = 400 # The width of each individual image / Width should be: width=height
 height = 400 # The height of each individual image / height should be: height=width
 # Settings for the final image
-final_img_bg = (0,0,255) # Please specify as RGB or RGBA
+final_img_bg = (255,102,0) # Please specify as RGB or RGBA
 
 images = []
 img_links = []
