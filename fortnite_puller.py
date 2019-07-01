@@ -149,4 +149,4 @@ def check_if_changed(final_img, saved_imgs_path):
 # Checks if the latest stored image is the same as this one pulled
 # If so, don't have tp send it again
 check_if_changed(final_img=final, saved_imgs_path=store_path)
-
+os.remove(temp_file_path)
