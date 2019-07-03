@@ -31,8 +31,8 @@ store_path_final = expanduser(os.path.join('~', 'Documents', 'fortnite_shop' , '
 
 # Settings for images next to each other in a row
 row_images_next_to_each_other = 4 # How many images shall be next to each other?
-width = 400 # The width of each individual image / Width should be: width=height
-height = 400 # The height of each individual image / height should be: height=width
+width = 512 # The width of each individual image / Width should be: width=height
+height = 512 # The height of each individual image / height should be: height=width
 # Settings for the final image
 final_img_bg = (255,102,0) # Please specify as RGB or RGBA
 
@@ -57,12 +57,6 @@ dir_name = "_".join([str(date.tm_mday), str(date.tm_mon), str(date.tm_year)])
 if not os.path.exists(path=(f'{store_path}/{dir_name}')):
     os.makedirs(name=(f'{store_path}/{dir_name}'))
 
-def generate_mkstemp():
-    # Generate a preferably unique name for a file
-    imagefile_path = ((tempfile.mkstemp(prefix='fn_', suffix='.png',
-                        dir=(os.path.join(store_path, dir_name)))))[1]
-    return imagefile_path
-
 print('Downloading...')
 for link in img_links:
     # Saves image from website as PIL.Image
@@ -80,42 +74,36 @@ def first_items(items_list, number):
     return first_items
 
 def img_to_row(img_list):
-    row_img = Image.new(mode='RGBA', size=((len(img_list)*width), height), color=(255,255,255))
+    row_img = Image.new(mode='RGBA', size=((len(img_list)*width), height), color=final_img_bg)
+    
     x_paste=0
     y_paste=0
-
+    
     for image in img_list:
-        image = image.resize(size=(width,height))
         row_img.paste(im=image, box=(x_paste, y_paste))
         x_paste += width
+
     return row_img
 
 def rows_to_one(rows):
-    result_img = Image.new(mode='RGBA',color=(255,255,255),\
+    result_img = Image.new(mode='RGBA',color=final_img_bg,\
                             size=((row_images_next_to_each_other*width),height*len(rows)))
     x_paste=0
     y_paste=0
     for image in rows:
-        result_img.paste(im=image, box=(x_paste,y_paste),)
+        result_img.paste(im=image, box=(x_paste,y_paste))
         y_paste += height
     return result_img
 
-images_sliced = []
-
-while len(images) > 0:
-    images_sliced.append(first_items(items_list=images, number=row_images_next_to_each_other))
-
-row_imgs = []
-
-for item in images_sliced:
-    row_imgs.append(img_to_row(img_list=item))
-
-foreground = rows_to_one(rows=row_imgs)
-final = Image.new(color=final_img_bg, size=(int(foreground.width/2), int(foreground.height/2)), mode='RGBA')
-foreground = foreground.resize(size=(int(foreground.width/2), int(foreground.height/2)))
-final.paste(im=foreground,box=(0,0),mask=foreground)
-temp_file_path = tempfile.mkstemp(suffix='.png')[1]
-final.save(fp=temp_file_path)
+def send_img_as_telegram_message():
+    files = {
+        'photo':open(os.path.join(store_path_final.format(dir_name)),'rb')
+    }
+    header = {
+        'chat_id':chat_id,
+    }
+    print("Sending telegram message (image).")
+    requests.post(url=send_photo_link, data=header, files=files)
 
 def check_if_changed(final_img, saved_imgs_path):
     # First get the latest created directory and than in this directory to latest created file
@@ -137,14 +125,36 @@ def check_if_changed(final_img, saved_imgs_path):
     else:
         print("Found new fortnite shop.")
         final.save(fp=store_path_final.format(dir_name))
+        send_img_as_telegram_message()
 
-        files = {
-            'photo':open(os.path.join(store_path_final.format(dir_name)),'rb')
-        }
-        header = {
-            'chat_id':chat_id,
-        }
-        requests.post(url=send_photo_link, data=header, files=files)
+def edit_single_image(image_2_edit):
+    image_2_edit = image_2_edit.resize(size=(width,height))
+
+    x_paste = 0
+    y_paste = 0
+
+    edited_image = Image.new(size=(width, height), color=final_img_bg, mode='RGBA')
+    edited_image.paste(im=image_2_edit, box=(0,0), mask=image_2_edit)
+    
+    return edited_image
+
+
+images_sliced = []
+row_imgs = []
+
+for image in images:
+    images[images.index(image)] = edit_single_image(image_2_edit=image)
+
+while len(images) > 0:
+    images_sliced.append(first_items(items_list=images, number=row_images_next_to_each_other))
+
+for item in images_sliced:
+    row_imgs.append(img_to_row(img_list=item))
+
+final = rows_to_one(rows=row_imgs)
+
+temp_file_path = tempfile.mkstemp(suffix='.png')[1]
+final.save(fp=temp_file_path)
 
 # Checks if the latest stored image is the same as this one pulled
 # If so, don't have tp send it again
