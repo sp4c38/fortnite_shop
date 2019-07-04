@@ -6,10 +6,11 @@ import random
 import requests
 import hashlib
 import shutil
+import sys
 import tempfile
 
-from PIL import Image
 from os.path import expanduser
+from PIL import Image,ImageDraw,ImageFont
 
 # Put in credentials file later
 chat_id = '-1001269378894'
@@ -26,8 +27,15 @@ requests_session = requests.Session()
 # Change some stuff here if ya want to
 
 # Some general settings
-store_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop'))
-store_path_final = expanduser(os.path.join('~', 'Documents', 'fortnite_shop' , '{0}', 'final.png'))
+backups_store_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'backups'))
+store_path_final = expanduser(os.path.join('~', 'Documents', 'fortnite_shop' , 'backups', '{0}', 'final.png'))
+text_font_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'fonts', 'Lato-Bold.ttf')) # Please set as .ttf file
+
+# Settings for vbucks text (for each image)
+vbucks_text_size = 50
+vbucks_text_position = (0,0)
+vbucks_text_color = (255,255,255)
+
 
 # Settings for images next to each other in a row
 row_images_next_to_each_other = 4 # How many images shall be next to each other?
@@ -43,6 +51,7 @@ img_links = []
 # Pulls json from api site with credentials and gets needed information
 
 data = (requests_session.get(url=shop_url, headers=headers)).json()
+
 for item in data['data']['featured']:
     img_links.append(item['images']['icon'])
 
@@ -54,8 +63,8 @@ for item in data['data']['daily']:
 date = datetime.date.today().timetuple()
 dir_name = "_".join([str(date.tm_mday), str(date.tm_mon), str(date.tm_year)])
 
-if not os.path.exists(path=(f'{store_path}/{dir_name}')):
-    os.makedirs(name=(f'{store_path}/{dir_name}'))
+if not os.path.exists(path=(f'{backups_store_path}/{dir_name}')):
+    os.makedirs(name=(f'{backups_store_path}/{dir_name}'))
 
 print('Downloading...')
 for link in img_links:
@@ -133,10 +142,25 @@ def edit_single_image(image_2_edit):
     x_paste = 0
     y_paste = 0
 
-    edited_image = Image.new(size=(width, height), color=final_img_bg, mode='RGBA')
-    edited_image.paste(im=image_2_edit, box=(0,0), mask=image_2_edit)
+    edited_image = Image.new(size=(width, height), mode='RGBA')
+    edited_image.paste(im=image_2_edit, box=(0,0))
+
+    # if not os.path.exists(text_font_path):
+    #     print(f"Font path \'{text_font_path}\' doesn't exist.")
+    #     sys.exit(1)
+
     
-    return edited_image
+    # draw = ImageDraw.Draw(edited_image)
+    # font = ImageFont.truetype(font=text_font_path, size=vbucks_text_size)
+    # draw.text(xy=vbucks_text_position, text='1500', fill=vbucks_text_color,\
+    #           font=font)
+
+    # Has to be pasted again on a new image so that the mask option works correctly (this type
+    # of bug only would happens by some images (here not anymore (because it was fixed)))
+    bg_image = Image.new(size=(width, height), color=final_img_bg, mode='RGBA')
+    bg_image.paste(im=edited_image, box=(0,0), mask=edited_image)
+    
+    return bg_image
 
 
 images_sliced = []
@@ -158,5 +182,5 @@ final.save(fp=temp_file_path)
 
 # Checks if the latest stored image is the same as this one pulled
 # If so, don't have tp send it again
-check_if_changed(final_img=final, saved_imgs_path=store_path)
+check_if_changed(final_img=final, saved_imgs_path=backups_store_path)
 os.remove(temp_file_path)
