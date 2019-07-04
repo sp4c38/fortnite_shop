@@ -14,7 +14,9 @@ from PIL import Image,ImageDraw,ImageFont
 from typing import NamedTuple
 
 # Put in credentials file later
-chat_id = '-340145564'
+
+chat_id = '-340145564' 
+
 send_photo_link = 'https://api.telegram.org/bot723477855:AAEPsApC9-UXtWZ7QWZxndvRuY8ZXQoXM1g/sendPhoto'
 
 shop_url = 'https://fnbr.co/api/shop'
