@@ -13,7 +13,7 @@ from os.path import expanduser
 from PIL import Image,ImageDraw,ImageFont
 
 # Put in credentials file later
-chat_id = '-1001269378894'
+chat_id = '-340145564' 
 send_photo_link = 'https://api.telegram.org/bot723477855:AAEPsApC9-UXtWZ7QWZxndvRuY8ZXQoXM1g/sendPhoto'
 
 shop_url = 'https://fnbr.co/api/shop'
