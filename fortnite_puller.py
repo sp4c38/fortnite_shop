@@ -15,7 +15,7 @@ from typing import NamedTuple
 
 # Put in credentials file later
 
-chat_id = '-1001323616343'
+chat_id = '-340145564'
 
 send_photo_link = 'https://api.telegram.org/bot723477855:AAEPsApC9-UXtWZ7QWZxndvRuY8ZXQoXM1g/sendPhoto'
 
