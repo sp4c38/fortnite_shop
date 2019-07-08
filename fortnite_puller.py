@@ -31,11 +31,11 @@ requests_session = requests.Session()
 
 # Some general settings
 rarity_grades = {
-    'common':(128,128,128), # gray
-    'uncommon': (11, 165, 52), # green
-    'rare': (0,0,255), # blue
-    'epic': (128,0,128), # purple
-    'legendary': (255,102,0) # orange
+    #'common':(128,128,128), # gray
+    #'uncommon': (11, 165, 52), # green
+    'rare': Image.open(expanduser(os.path.join('~','Documents','fortnite_shop','backgrounds','blue_rare.png'))), # blue
+    #'epic': (128,0,128), # purple
+    'legendary': Image.open(expanduser(os.path.join('~','Documents','fortnite_shop','backgrounds','orange_legendary.png'))) # orange
 }
 backups_store_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'backups'))
 store_path_final = expanduser(os.path.join('~', 'Documents', 'fortnite_shop' , 'backups', '{0}', 'final.png'))
@@ -57,7 +57,8 @@ row_images_next_to_each_other = 4 # How many images shall be next to each other?
 width = 512 # The width of each individual image / Width should be: width=height
 height = 512 # The height of each individual image / height should be: height=width
 # Settings for the final image
-final_img_bg = (255,102,0) # Please specify as RGB or RGBA
+bg_not_found_bg = (255,102,0) # Is used when there is no background image found / Please specify as RGB or RGBA
+border_color = (255,255,255) # Please specify as RGB or RGBA
 
 # Give api key with in header (must be 'headers' in request)
 # Pulls json from api site with credentials and gets needed information
@@ -69,10 +70,7 @@ data_img = [] # Items in list as NamedTuple
 for item in data['data']['featured']:
     part_data_img_link = NamedTuple('img', [('img_url', str),('rarity', str),('price', str)])
 
-    if item['images']['icon']:
-        part_data_img_link.img_link = item['images']['icon']
-    else:
-        part_data_img_link.img_link = item['images']['icon']
+    part_data_img_link.img_link = item['images']['icon']
 
     part_data_img_link.rarity = item['rarity']
     part_data_img_link.price = item['price']
@@ -81,10 +79,8 @@ for item in data['data']['featured']:
 for item in data['data']['daily']:
     part_data_img_link = NamedTuple('url_and_rarity', [('img_url', str),('rarity', str),('price', str)])
     
-    if item['images']['icon']:
-        part_data_img_link.img_link = item['images']['icon']
-    else:
-        part_data_img_link.img_link = item['images']['icon']
+
+    part_data_img_link.img_link = item['images']['icon']
     
     part_data_img_link.rarity = item['rarity']
     part_data_img_link.price = item['price']
@@ -117,7 +113,7 @@ def first_items(items_list, number):
     return first_items
 
 def imgs_to_row(img_list):
-    row_img = Image.new(mode='RGBA', size=((len(img_list)*width), height), color=final_img_bg)
+    row_img = Image.new(mode='RGBA', size=((len(img_list)*width), height))
     
     x_paste=0
     y_paste=0
@@ -130,8 +126,7 @@ def imgs_to_row(img_list):
     return row_img
 
 def rows_to_one(rows):
-    result_img = Image.new(mode='RGBA',color=final_img_bg,\
-                            size=((row_images_next_to_each_other*width),height*len(rows)))
+    result_img = Image.new(mode='RGBA', color=bg_not_found_bg, size=((row_images_next_to_each_other*width),height*len(rows)))
     x_paste=0
     y_paste=0
     
@@ -201,15 +196,24 @@ def edit_single_image(img_data):
     draw.text(xy=text_position, text=img_data.price, fill=vbucks_text_color,\
               font=font)
 
-
-    # Set background color (dependet on the rarity of the shop item (image))
-    if img_data.rarity in rarity_grades:
-        rarity_color = rarity_grades[img_data.rarity]
-
     # Has to be pasted again on a new image so that the mask option works correctly (this type
     # of bug only would happens by some images (here not anymore (because it was fixed)))
-    bg_image = Image.new(size=(width, height), color=rarity_color, mode='RGBA')
+    
+    # Set background color (dependet on the rarity of the shop item (image))
+    
+    if img_data.rarity in rarity_grades:
+        bg_image = Image.new(size=(width, height), mode='RGBA')
+        rarity_bg_img = rarity_grades[img_data.rarity]
+        rarity_bg_img = rarity_bg_img.resize(size=(width,height))
+        bg_image.paste(im=rarity_bg_img, box=(0,0))
+    else:
+        rarity_bg_img = bg_not_found_bg
+        bg_image = Image.new(size=(width, height),color=rarity_bg_img, mode='RGBA')
+
     bg_image.paste(im=edited_image, box=(10,0), mask=edited_image)
+    draw = ImageDraw.Draw(bg_image)
+    # Draw border
+    draw.rectangle(xy=[(0,0), (edited_image.width, edited_image.height)], outline=border_color, width=2)
 
     return bg_image
 
