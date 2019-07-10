@@ -53,7 +53,10 @@ vbucks_img_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'da
 
 
 # Settings for images next to each other in a row
-row_images_next_to_each_other = 4 # How many images shall be next to each other?
+row_images_next_to_each_other = 4 # How many images shall be next to each other in one row?
+                                  # If there are too less images in one row so that it still looks comfortable, the program
+                                  # will automatically increase the amout of images next to each other in one row
+
 width = 512 # The width of each individual image / Width should be: width=height
 height = 512 # The height of each individual image / height should be: height=width
 # Settings for the final image
@@ -93,6 +96,11 @@ for item in data['data']['daily']:
     part_data_img_link.rarity = item['rarity']
     part_data_img_link.price = item['price']
     data_img_link.append(part_data_img_link)
+
+# Increases the amout of images next to each other -> to not have too many rows
+
+if len(data_img_link) > row_images_next_to_each_other*4:
+    row_images_next_to_each_other = int(row_images_next_to_each_other*1.5)
 
 # Creates name for directory (with date)
 date = datetime.date.today().timetuple()
