@@ -1,2 +1,3 @@
 # fortnite_shop_poller
-This will be a program which gets the fortnite shop and sends it to a whished telegram group (as bot)
+
+Gets the shop from a fortnite api and converts items (which are images) to one whole image (can also see price and name of item).
