@@ -41,21 +41,28 @@ backups_store_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 
 store_path_final = expanduser(os.path.join('~', 'Documents', 'fortnite_shop' , 'backups', '{0}', 'final.png'))
 
 text_font_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'fonts', 'Lato-Bold.ttf')) # Please set as .ttf file
-character_space_to_top = 6 # If your font characters have a certain space to the top (from each character to the end of the top)
-                            # please specifiy this space in px, it's important to that the calculation works like it should
-                
-# Settings for vbucks text (for each image)
-vbucks_text_size = 40 #  Will resize the vbucks image according to this setting
-vbucks_text_color = (255,255,255)
-spacing_to_top = 5
-spacing_to_side = 5 # spacing to edge of the vbucks image in pixel (will adjust the text field automatically)
+         
+# Settings for text (for each image)
+text_color = (255,255,255)
+
+name_text_size = 30
+vbucks_text_size = 35 #  Will size the vbucks image according to this setting
+
+spacing_to_top_vbucks_image = 20
+spacing_to_top_price_text = 15
+spacing_to_top_name_text = 60
+
+spacing_to_side = 2 # spacing to edge of the vbucks image in pixel (will adjust the text field automatically)
+
+spacing_to_vbucks_image = 10 # The space which the price text is situated next to the vbucks image
 vbucks_img_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'data', 'vbucks_icon', 'icon_vbucks.png'))
 
 
 # Settings for images next to each other in a row
 row_images_next_to_each_other = 4 # How many images shall be next to each other in one row?
-                                  # If there are too less images in one row so that it still looks comfortable, the program
-                                  # will automatically increase the amout of images next to each other in one row
+                                  # If there are too less images in one row so that it still looks comfortable (that there
+                                  # aren't too many rows, the program will automatically increase the amout of 
+                                  # images next to each other in one row
 
 width = 512 # The width of each individual image / Width should be: width=height
 height = 512 # The height of each individual image / height should be: height=width
@@ -67,39 +74,43 @@ border_color = (255,255,255) # Please specify as RGB or RGBA
 # Pulls json from api site with credentials and gets needed information
 
 data = (requests_session.get(url=shop_url, headers=headers)).json()
-data_img_link = [] # Items in list as NamedTuple
-data_img = [] # Items in list as NamedTuple
+
+image_data = [] # Items in list as NamedTuple
 
 for item in data['data']['featured']:
-    part_data_img_link = NamedTuple('img', [('img_url', str),('rarity', str),('price', str)])
+    part_data = NamedTuple('image_data', [('image', str),('rarity', str),('price', str),('name', str)])
 
     if item['images']['featured']:
-        part_data_img_link.img_link = item['images']['featured']
+        part_data.image = item['images']['featured']
     else:
-        part_data_img_link.img_link = item['images']['icon']
+        part_data.image = item['images']['icon']
 
-    part_data_img_link.rarity = item['rarity']
-    part_data_img_link.price = item['price']
-    data_img_link.append(part_data_img_link)
+    part_data.rarity = item['rarity']
+    part_data.price = item['price']
+    part_data.name = item['name']
+
+    image_data.append(part_data)
 
 for item in data['data']['daily']:
-    part_data_img_link = NamedTuple('url_and_rarity', [('img_url', str),('rarity', str),('price', str)])
+    part_data = NamedTuple('image_data', [('image', str),('rarity', str),('price', str),('name', str)])
     
     if item['images']['featured']:
-        part_data_img_link.img_link = item['images']['featured']
+        part_data.image = item['images']['featured']
     else:
-        part_data_img_link.img_link = item['images']['icon']
+        part_data.image = item['images']['icon']
 
 
-    part_data_img_link.img_link = item['images']['icon']
+    part_data.img_link = item['images']['icon']
     
-    part_data_img_link.rarity = item['rarity']
-    part_data_img_link.price = item['price']
-    data_img_link.append(part_data_img_link)
+    part_data.rarity = item['rarity']
+    part_data.price = item['price']
+    part_data.name = item['name']
+
+    image_data.append(part_data)
 
 # Increases the amout of images next to each other -> to not have too many rows
 
-if len(data_img_link) > row_images_next_to_each_other*4:
+if len(image_data) > row_images_next_to_each_other*4:
     row_images_next_to_each_other = int(row_images_next_to_each_other*1.5)
 
 # Creates name for directory (with date)
@@ -109,24 +120,25 @@ dir_name = "_".join([str(date.tm_mday), str(date.tm_mon), str(date.tm_year)])
 if not os.path.exists(path=(f'{backups_store_path}/{dir_name}')):
     os.makedirs(name=(f'{backups_store_path}/{dir_name}'))
 
-print('Downloading...')
-for i in data_img_link:
-    part_data_img = NamedTuple('data', [('img', str), ('rarity', str),('price', str)])
-    # Saves image from website as PIL.Image
-    part_data_img.rarity= i.rarity
-    part_data_img.price = i.price
-    print(i.img_link)
-    part_data_img.img = Image.open(io.BytesIO(requests.get(url=i.img_link).content))
-    data_img.append(part_data_img)
+print("Polling...")
+for i in image_data:
+    print(i.image)
+    i.image = Image.open(io.BytesIO(requests.get(url=i.image).content))
 
-def first_items(items_list, number):
-    x = 0
-    first_items = []
+print("Download/Downloads succsessful completed.")
 
-    for item in items_list[slice(number)]:
-        first_items.append(items_list.pop(items_list.index(item)))
-    
-    return first_items
+
+def items_sliced(items_list, number):
+    items_sliced = []
+
+    while len(items_list) > 0:
+        cache = []
+        for item in items_list[slice(number)]:
+            cache.append(item)
+            items_list.pop(items_list.index(item))
+        items_sliced.append(cache)
+
+    return items_sliced
 
 def imgs_to_row(img_list):
     row_img = Image.new(mode='RGBA', size=((len(img_list)*width), height))
@@ -135,7 +147,7 @@ def imgs_to_row(img_list):
     y_paste=0
 
     for item in img_list:
-        row_img.paste(im=item.img, box=(x_paste, y_paste))
+        row_img.paste(im=item.image, box=(x_paste, y_paste))
         x_paste += width
 
 
@@ -182,11 +194,11 @@ def check_if_changed(final_img, saved_imgs_path):
     else:
         print("Found new fortnite shop.")
         final.save(fp=store_path_final.format(dir_name))
-        send_img_as_telegram_message()
+        #send_img_as_telegram_message()
 
-def edit_single_image(img_data):
-    img_data.img = img_data.img.resize(size=(width,height))
-
+def edit_single_image(single_image_data):
+    single_image_data.image = single_image_data.image.resize(size=(width,height))
+    
     x_paste = 0
     y_paste = 0
 
@@ -194,58 +206,62 @@ def edit_single_image(img_data):
         print(f"Font path \'{text_font_path}\' doesn't exist.")
         sys.exit(1)
 
-    edited_image = Image.new(size=(width, height), mode='RGBA')
-    edited_image.paste(im=img_data.img, box=(0,0))
-    
-
-    # Add v-bucks price for shop itme
+    img_elements = Image.new(mode='RGBA', size=(width,height))
+    img_elements.paste(single_image_data.image)
+    # Add v-bucks price for shop item
+    data_box = Image.new(mode='RGBA', size=(width,height))
     vbucks_icon = Image.open(fp=vbucks_img_path)
     vbucks_icon = vbucks_icon.resize(size=(vbucks_text_size,vbucks_text_size))
 
-    image_position = (spacing_to_side, spacing_to_top)
-    #text_position = ((spacing_to_side+vbucks_icon.width+10), (((spacing_to_top+(vbucks_icon.height/2))-(vbucks_text_size/2))-character_space_to_top))
-    text_position = ((spacing_to_side+vbucks_icon.width+10),spacing_to_top-character_space_to_top)
-    edited_image.paste(im=vbucks_icon, box=image_position)
+    image_position = (spacing_to_side, spacing_to_top_vbucks_image)
+    vbucks_text_position = ((spacing_to_side+vbucks_icon.width+spacing_to_vbucks_image), spacing_to_top_price_text)
+    name_text_position = (spacing_to_side, spacing_to_top_name_text)
 
-    draw = ImageDraw.Draw(edited_image)
+    draw = ImageDraw.Draw(img_elements)
     font = ImageFont.truetype(font=text_font_path, size=vbucks_text_size)
-    draw.text(xy=text_position, text=img_data.price, fill=vbucks_text_color,\
-              font=font)
+
+    # Draw vbucks image and price text
+    img_elements.paste(im=vbucks_icon, box=image_position)
+    draw.text(xy=vbucks_text_position, text=single_image_data.price, fill=text_color, font=font)
+    
+    # Draw item name according to if there is enough space (will draw every time, just different text size, or with wordwrap)
+    # item_name = single_image_data.name
+
+    # font.size = name_text_size
+    # print(font.size)
+    # draw.text(xy=name_text_position, text=single_image_data.name, fill=text_color, font=font)
 
     # Has to be pasted again on a new image so that the mask option works correctly (this type
-    # of bug only would happens by some images (here not anymore (because it was fixed)))
+    # of bug would only happen on some images (here not anymore (because it was fixed)))
     
     # Set background color (dependet on the rarity of the shop item (image))
     
-    if img_data.rarity in rarity_grades:
+    if single_image_data.rarity in rarity_grades:
         bg_image = Image.new(size=(width, height), mode='RGBA')
-        rarity_bg_img = rarity_grades[img_data.rarity]
+        rarity_bg_img = rarity_grades[single_image_data.rarity]
         rarity_bg_img = rarity_bg_img.resize(size=(width,height))
         bg_image.paste(im=rarity_bg_img, box=(0,0))
     else:
         rarity_bg_img = bg_not_found_bg
         bg_image = Image.new(size=(width, height),color=rarity_bg_img, mode='RGBA')
 
-    bg_image.paste(im=edited_image, box=(10,0), mask=edited_image)
-    draw = ImageDraw.Draw(bg_image)
     # Draw border
-    draw.rectangle(xy=[(0,0), (edited_image.width, edited_image.height)], outline=border_color, width=2)
+    draw = ImageDraw.Draw(bg_image)
+    draw.rectangle(xy=((0,0), (width,height)), outline=border_color, width=2)
+    
+    bg_image.paste(im=img_elements, box=(10,0), mask=img_elements)
 
     return bg_image
 
 
-images_sliced = []
+for i in image_data:
+    image_data[image_data.index(i)].image = edit_single_image(single_image_data=i)
+
+image_data = items_sliced(items_list=image_data, number=row_images_next_to_each_other)
+
 row_imgs = []
-
-for i in data_img:
-    i
-    data_img[data_img.index(i)].img = edit_single_image(img_data=i)
-
-while len(data_img) > 0:
-    images_sliced.append(first_items(items_list=data_img, number=row_images_next_to_each_other))
-
-for items_as_list in images_sliced:
-    row_imgs.append(imgs_to_row(img_list=items_as_list))
+for items_in_list in image_data:
+    row_imgs.append(imgs_to_row(img_list=items_in_list))
 
 final = rows_to_one(rows=row_imgs)
 
