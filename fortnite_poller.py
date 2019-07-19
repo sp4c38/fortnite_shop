@@ -194,7 +194,7 @@ def check_if_changed(final_img, saved_imgs_path):
     else:
         print("Found new fortnite shop.")
         final.save(fp=store_path_final.format(dir_name))
-        # send_img_as_telegram_message()
+        send_img_as_telegram_message()
 
 def edit_single_image(single_image_data):
     single_image_data.image = single_image_data.image.resize(size=(width,height))
