@@ -46,11 +46,11 @@ text_font_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'fon
 text_color = (255,255,255)
 
 name_text_size = 30
-vbucks_text_size = 35 #  Will size the vbucks image according to this setting
+text_size = 40 #  Will size the vbucks image according to this setting
 
 spacing_to_top_vbucks_image = 20
 spacing_to_top_price_text = 15
-spacing_to_top_name_text = 60
+spacing_to_top_name_text = 70
 
 spacing_to_side = 2 # spacing to edge of the vbucks image in pixel (will adjust the text field automatically)
 
@@ -194,7 +194,7 @@ def check_if_changed(final_img, saved_imgs_path):
     else:
         print("Found new fortnite shop.")
         final.save(fp=store_path_final.format(dir_name))
-        send_img_as_telegram_message()
+        # send_img_as_telegram_message()
 
 def edit_single_image(single_image_data):
     single_image_data.image = single_image_data.image.resize(size=(width,height))
@@ -211,25 +211,28 @@ def edit_single_image(single_image_data):
     # Add v-bucks price for shop item
     data_box = Image.new(mode='RGBA', size=(width,height))
     vbucks_icon = Image.open(fp=vbucks_img_path)
-    vbucks_icon = vbucks_icon.resize(size=(vbucks_text_size,vbucks_text_size))
+    vbucks_icon = vbucks_icon.resize(size=(text_size,text_size))
 
     image_position = (spacing_to_side, spacing_to_top_vbucks_image)
     vbucks_text_position = ((spacing_to_side+vbucks_icon.width+spacing_to_vbucks_image), spacing_to_top_price_text)
-    name_text_position = (spacing_to_side, spacing_to_top_name_text)
-
+    
     draw = ImageDraw.Draw(img_elements)
-    font = ImageFont.truetype(font=text_font_path, size=vbucks_text_size)
+    font = ImageFont.truetype(font=text_font_path, size=text_size)
 
     # Draw vbucks image and price text
     img_elements.paste(im=vbucks_icon, box=image_position)
     draw.text(xy=vbucks_text_position, text=single_image_data.price, fill=text_color, font=font)
     
     # Draw item name according to if there is enough space (will draw every time, just different text size, or with wordwrap)
-    # item_name = single_image_data.name
+    if single_image_data.name:
+        item_name = single_image_data.name
+        spilted_name = item_name.split(' ')
+        name_text_position = {'spacing_to_side': spacing_to_side, 'spacing_to_top':spacing_to_top_name_text}
 
-    # font.size = name_text_size
-    # print(font.size)
-    # draw.text(xy=name_text_position, text=single_image_data.name, fill=text_color, font=font)
+    for word in spilted_name:
+        draw.text(xy=(name_text_position['spacing_to_side'], name_text_position['spacing_to_top']),\
+         text=word, fill=text_color, font=font)
+        name_text_position['spacing_to_top'] += text_size
 
     # Has to be pasted again on a new image so that the mask option works correctly (this type
     # of bug would only happen on some images (here not anymore (because it was fixed)))
