@@ -44,6 +44,7 @@ text_font_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'fon
          
 # Settings for text (for each image)
 text_color = (255,255,255)
+text_color_2 = (102,255,255)
 
 name_text_size = 30
 text_size = 40 #  Will size the vbucks image according to this setting
@@ -125,7 +126,7 @@ for i in image_data:
     print(i.image)
     i.image = Image.open(io.BytesIO(requests.get(url=i.image).content))
 
-print("Download/Downloads succsessful completed.")
+print("Download/Downloads successful completed.")
 
 
 def items_sliced(items_list, number):
@@ -231,7 +232,7 @@ def edit_single_image(single_image_data):
 
     for word in spilted_name:
         draw.text(xy=(name_text_position['spacing_to_side'], name_text_position['spacing_to_top']),\
-         text=word, fill=text_color, font=font)
+         text=word, fill=text_color_2, font=font)
         name_text_position['spacing_to_top'] += text_size
 
     # Has to be pasted again on a new image so that the mask option works correctly (this type
