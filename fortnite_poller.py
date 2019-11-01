@@ -1,10 +1,10 @@
 import datetime
 import glob
+import hashlib
 import io
 import os
 import random
 import requests
-import hashlib
 import shutil
 import sys
 import tempfile
@@ -37,6 +37,16 @@ rarity_grades = {
     'epic': Image.open(expanduser(os.path.join('~','Documents', 'fortnite_shop','backgrounds','purple_epic.png'))), # purple
     'legendary': Image.open(expanduser(os.path.join('~','Documents','fortnite_shop','backgrounds','orange_legendary.png'))) # orange
 }
+
+text_color_for_rarity = {
+    'uncommon': (255,215,0), #green
+    'common': (100,0,255), # gray
+    'rare': (255,100,0),  # blue
+    'epic': (100,255,0), # purple
+    'legendary':  (255,0,100), # orange 
+}
+default_text_color_for_rarity = (102,255,255)
+
 backups_store_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'backups'))
 store_path_final = expanduser(os.path.join('~', 'Documents', 'fortnite_shop' , 'backups', '{0}', 'final.png'))
 
@@ -44,7 +54,6 @@ text_font_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'fon
          
 # Settings for text (for each image)
 text_color = (255,255,255)
-text_color_2 = (102,255,255)
 
 name_text_size = 30
 text_size = 40 #  Will size the vbucks image according to this setting
@@ -69,7 +78,7 @@ width = 512 # The width of each individual image / Width should be: width=height
 height = 512 # The height of each individual image / height should be: height=width
 # Settings for the final image
 bg_not_found_bg = (255,102,0) # Is used when there is no background image found / Please specify as RGB or RGBA
-border_color = (255,255,255) # Please specify as RGB or RGBA
+border_color = (255,255,255) # Please specify as RGB, RGBA will not work
 
 # Give api key with in header (must be 'headers' in request)
 # Pulls json from api site with credentials and gets needed information
@@ -126,7 +135,7 @@ for i in image_data:
     print(i.image)
     i.image = Image.open(io.BytesIO(requests.get(url=i.image).content))
 
-print("Download/Downloads successful completed.")
+print("Download/Downloads successfully completed.")
 
 
 def items_sliced(items_list, number):
@@ -195,7 +204,7 @@ def check_if_changed(final_img, saved_imgs_path):
     else:
         print("Found new fortnite shop.")
         final.save(fp=store_path_final.format(dir_name))
-        send_img_as_telegram_message()
+        # send_img_as_telegram_message()
 
 def edit_single_image(single_image_data):
     single_image_data.image = single_image_data.image.resize(size=(width,height))
@@ -231,6 +240,10 @@ def edit_single_image(single_image_data):
         name_text_position = {'spacing_to_side': spacing_to_side, 'spacing_to_top':spacing_to_top_name_text}
 
     for word in spilted_name:
+        if single_image_data.rarity in rarity_grades:
+            text_color_2 = text_color_for_rarity[single_image_data.rarity]
+        else:
+            text_color_2 = default_text_color_for_rarity
         draw.text(xy=(name_text_position['spacing_to_side'], name_text_position['spacing_to_top']),\
          text=word, fill=text_color_2, font=font)
         name_text_position['spacing_to_top'] += text_size
