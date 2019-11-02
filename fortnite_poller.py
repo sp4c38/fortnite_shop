@@ -9,6 +9,7 @@ import shutil
 import sys
 import tempfile
 #.kmjwertfgioj
+# A monster asks 'trick or treat'
 from os.path import expanduser
 from PIL import Image,ImageDraw,ImageFont
 from typing import NamedTuple
