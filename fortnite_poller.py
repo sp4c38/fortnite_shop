@@ -8,7 +8,7 @@ import requests
 import shutil
 import sys
 import tempfile
-
+#.kmjwertfgioj
 from os.path import expanduser
 from PIL import Image,ImageDraw,ImageFont
 from typing import NamedTuple
