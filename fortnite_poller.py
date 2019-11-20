@@ -1,3 +1,4 @@
+import configparser
 import datetime
 import glob
 import hashlib
@@ -13,121 +14,104 @@ from os.path import expanduser
 from PIL import Image,ImageDraw,ImageFont
 from typing import NamedTuple
 
-# open requests session (more effectiv than to open one each time needed)
-requests_session = requests.Session()
+# Import files
+import settings
+import merge_pictures
 
-# Change some stuff here if ya want to
+# image_data now images
 
-# Some general settings
-rarity_grades = {
-    'uncommon': Image.open(expanduser(os.path.join('~','Documents','fortnite_shop','backgrounds','green_uncommon.png'))), #green
-    'common':Image.open(expanduser(os.path.join('~','Documents','fortnite_shop','backgrounds','gray_common.png'))), # gray
-    'rare': Image.open(expanduser(os.path.join('~','Documents','fortnite_shop','backgrounds','blue_rare.png'))), # blue
-    'epic': Image.open(expanduser(os.path.join('~','Documents', 'fortnite_shop','backgrounds','purple_epic.png'))), # purple
-    'legendary': Image.open(expanduser(os.path.join('~','Documents','fortnite_shop','backgrounds','orange_legendary.png'))) # orange
-}
+class ShopItem(): # Can't be named Image because it would overwrite the Image class from PIL
+    def __init__(self, image=None, name=None, rarity=None, price=None): # Consider key word arguments for better overview of the program
+        self.image = image
+        self.name = name
+        self.rarity = rarity
+        self.price = price
 
-text_color_for_rarity = {
-    'uncommon': (255,215,0), #green
-    'common': (100,0,255), # gray
-    'rare': (255,100,0),  # blue
-    'epic': (100,255,0), # purple
-    'legendary':  (255,0,100), # orange 
-}
-default_text_color_for_rarity = (102,255,255)
+def get_images(config=None):
 
-backups_store_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'backups'))
-store_path_final = expanduser(os.path.join('~', 'Documents', 'fortnite_shop' , 'backups', '{0}', 'final.png'))
+    headers = {
+        'x-api-key':config['fnbr_api']['api-key'],
+    }
 
-text_font_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'fonts', 'Lato-Bold.ttf')) # Please set as .ttf file
-         
-# Settings for text (for each image)
-text_color = (255,255,255)
+    req = requests.Session() # requests only needed in this function
 
-name_text_size = 30
-text_size = 40 #  Will size the vbucks image according to this setting
+    data = req.get(url=config['fnbr_api']['request_url'], headers=headers).json()
 
-spacing_to_top_vbucks_image = 20
-spacing_to_top_price_text = 15
-spacing_to_top_name_text = 70
+    imageobjs = [] # A list with all Image object
 
-spacing_to_side = 2 # spacing to edge of the vbucks image in pixel (will adjust the text field automatically)
+    for item in data['data']['featured']: # Featured items, most multiple days in shop
+        image_object = ShopItem()
+        
+        if item['images']['featured']:
+            image_link = item['images']['featured']
+        else:
+            image_link = item['images']['icon']
 
-spacing_to_vbucks_image = 10 # The space which the price text is situated next to the vbucks image
-vbucks_img_path = expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'data', 'vbucks_icon', 'icon_vbucks.png'))
+        if item['rarity']:
+            image_object.rarity = item['rarity']
+        if item['price']:
+            image_object.price = item['price']
+        if item['name']:
+            image_object.name = item['name']
+        
+        print(f"Downloading {image_link}...")
+        image_object.image = Image.open(io.BytesIO(req.get(url=image_link).content))
 
+        imageobjs.append(image_object)
 
-# Settings for images next to each other in a row
-row_images_next_to_each_other = 4 # How many images shall be next to each other in one row?
-                                  # If there are too less images in one row so that it still looks comfortable (that there
-                                  # aren't too many rows, the program will automatically increase the amout of 
-                                  # images next to each other in one row
+    for item in data['data']['daily']: # Daily items, mostly not multiple days in shop
+        image_object = ShopItem()
+        
+        if item['images']['featured']:
+            image_link = item['images']['featured']
+        else:
+            image_link = item['images']['icon']
 
-width = 512 # The width of each individual image / Width should be: width=height
-height = 512 # The height of each individual image / height should be: height=width
-# Settings for the final image
-bg_not_found_bg = (255,102,0) # Is used when there is no background image found / Please specify as RGB or RGBA
-border_color = (255,255,255) # Please specify as RGB, RGBA will not work
+        if item['rarity']:
+            image_object.rarity = item['rarity']
+        if item['price']:
+            image_object.price = item['price']
+        if item['name']:
+            image_object.name = item['name']
 
-# Give api key with in header (must be 'headers' in request)
-# Pulls json from api site with credentials and gets needed information
+        print(f"Downloading {image_link}...")
+        image_object.image = Image.open(io.BytesIO(req.get(url=image_link).content))
 
-data = (requests_session.get(url=shop_url, headers=headers)).json()
+        imageobjs.append(image_object)
 
-image_data = [] # Items in list as NamedTuple
+    return imageobjs
 
-for item in data['data']['featured']:
-    part_data = NamedTuple('image_data', [('image', str),('rarity', str),('price', str),('name', str)])
+def main():
+    config = configparser.ConfigParser() # Don't mix it up with settings 
+    config.read(str(settings.settings['config_file'])) # Settings file stores confidential data
 
-    if item['images']['featured']:
-        part_data.image = item['images']['featured']
-    else:
-        part_data.image = item['images']['icon']
-
-    part_data.rarity = item['rarity']
-    part_data.price = item['price']
-    part_data.name = item['name']
-
-    image_data.append(part_data)
-
-for item in data['data']['daily']:
-    part_data = NamedTuple('image_data', [('image', str),('rarity', str),('price', str),('name', str)])
-    
-    if item['images']['featured']:
-        part_data.image = item['images']['featured']
-    else:
-        part_data.image = item['images']['icon']
+    images = get_images(config)
+    import IPython;IPython.embed()
 
 
-    part_data.img_link = item['images']['icon']
-    
-    part_data.rarity = item['rarity']
-    part_data.price = item['price']
-    part_data.name = item['name']
 
-    image_data.append(part_data)
-
-# Increases the amout of images next to each other -> to not have too many rows
-
-if len(image_data) > row_images_next_to_each_other*4:
-    row_images_next_to_each_other = int(row_images_next_to_each_other*1.5)
-
-# Creates name for directory (with date)
-date = datetime.date.today().timetuple()
-dir_name = "_".join([str(date.tm_mday), str(date.tm_mon), str(date.tm_year)])
-
-if not os.path.exists(path=(f'{backups_store_path}/{dir_name}')):
-    os.makedirs(name=(f'{backups_store_path}/{dir_name}'))
-
-print("Polling...")
-for i in image_data:
-    print(i.image)
-    i.image = Image.open(io.BytesIO(requests.get(url=i.image).content))
-
-print("Download/Downloads successfully completed.")
+if __name__ == '__main__':
+    main()
 
 
-def items_sliced(items_list, number):
+
+# date = datetime.date.today().timetuple()
+# dir_name = "_".join([str(date.tm_mday), str(date.tm_mon), str(date.tm_year)])
+
+# if not os.path.exists(path=(f'{backups_store_path}/{dir_name}')):
+#     os.makedirs(name=(f'{backups_store_path}/{dir_name}'))
+
+
+
+
+
+
+
+
+
+
+"""
+def items_sliced(items_list, number): 
     items_sliced = []
 
     while len(items_list) > 0:
@@ -190,4 +174,4 @@ final.save(fp=temp_file_path)
 # Checks if the latest stored image is the same as this one pulled
 # If so, don't have tp send it again
 check_if_changed(final_img=final, saved_imgs_path=backups_store_path)
-os.remove(temp_file_path)
+os.remove(temp_file_path)"""
