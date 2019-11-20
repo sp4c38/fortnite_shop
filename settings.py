@@ -5,8 +5,11 @@ BASE_DIR = os.path.expanduser(os.path.join('~', 'Documents', 'fortnite_shop')) #
 
 settings = {
     'config_file': os.path.join(BASE_DIR, 'config', 'config.ini'), # Where config file is stores
-    'width':512, # Width of each image
-    'height':512, # Height of each image
+    'images_in_row' : 4, # 
+    'width':512, # Width of each individual image
+    'height':512, # Height of each individual image
+    'background_color' : (255,102,0), # Is used when there is no background image found / Please specify as RGB or RGBA
+    
     'rarity_grades' : { # Background color shall match rarity (to easily see which rarity a item has)
         'uncommon': Image.open(os.path.expanduser(os.path.join(BASE_DIR,'backgrounds','green_uncommon.png'))), #green
         'common':Image.open(os.path.expanduser(os.path.join(BASE_DIR,'backgrounds','gray_common.png'))), # gray
@@ -36,15 +39,8 @@ settings = {
     'spacing_to_side' : 2, # spacing to edge of the vbucks image in pixel (will adjust the text field automatically)
     'spacing_to_vbucks_image' : 10, # The space which the price text is situated next to the vbucks image
     'vbucks_img_path' : os.path.expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'data', 'vbucks_icon', 'icon_vbucks.png')),
-    'row_images_next_to_each_other' : 4, # How many images shall be next to each other in one row?
-                                  # If there are too less images in one row so that it still looks comfortable (that there
-                                  # aren't too many rows, the program will automatically increase the amout of 
-                                  # images next to each other in one row
 
-    'width' : 512, # The width of each individual image / Width should be: width=height
-    'height' : 512, # The height of each individual image / height should be: height=width
     # Settings for the final image
-    'bg_not_found_bg' : (255,102,0), # Is used when there is no background image found / Please specify as RGB or RGBA
     'border_color' : (255,255,255), # Please specify as RGB, RGBA will not work
 
 

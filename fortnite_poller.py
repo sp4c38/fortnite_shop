@@ -15,7 +15,7 @@ from PIL import Image,ImageDraw,ImageFont
 from typing import NamedTuple
 
 # Import files
-import settings
+from settings import settings
 import merge_pictures
 
 # image_data now images
@@ -55,7 +55,8 @@ def get_images(config=None):
             image_object.name = item['name']
         
         print(f"Downloading {image_link}...")
-        image_object.image = Image.open(io.BytesIO(req.get(url=image_link).content))
+
+        image_object.image = Image.open(io.BytesIO(req.get(url=image_link).content)).resize(size=(settings['width'], settings['height']))
 
         imageobjs.append(image_object)
 
@@ -75,19 +76,23 @@ def get_images(config=None):
             image_object.name = item['name']
 
         print(f"Downloading {image_link}...")
-        image_object.image = Image.open(io.BytesIO(req.get(url=image_link).content))
+
+        image_object.image = Image.open(io.BytesIO(req.get(url=image_link).content)).resize(size=(settings['width'], settings['height']))
 
         imageobjs.append(image_object)
+
+    imageobjs = merge_pictures.items_sliced(imageobjs, settings['images_in_row'])
 
     return imageobjs
 
 def main():
     config = configparser.ConfigParser() # Don't mix it up with settings 
-    config.read(str(settings.settings['config_file'])) # Settings file stores confidential data
+    config.read(str(settings['config_file'])) # Settings file stores confidential data
 
     images = get_images(config)
+    rows = merge_pictures.imgs_to_rows(img_list=images, settings=settings)
+    final_image = merge_pictures.rows_to_final(settings=settings, rows=rows)
     import IPython;IPython.embed()
-
 
 
 if __name__ == '__main__':
@@ -101,28 +106,7 @@ if __name__ == '__main__':
 # if not os.path.exists(path=(f'{backups_store_path}/{dir_name}')):
 #     os.makedirs(name=(f'{backups_store_path}/{dir_name}'))
 
-
-
-
-
-
-
-
-
-
 """
-def items_sliced(items_list, number): 
-    items_sliced = []
-
-    while len(items_list) > 0:
-        cache = []
-        for item in items_list[slice(number)]:
-            cache.append(item)
-            items_list.pop(items_list.index(item))
-        items_sliced.append(cache)
-
-    return items_sliced
-
 
 def send_img_as_telegram_message():
     files = {
