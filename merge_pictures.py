@@ -1,6 +1,7 @@
 # PythonFile which holds multiple functions to clip multiple images to one 
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
+
 
 def items_sliced(items_list, number): 
     items_sliced = []
@@ -10,6 +11,48 @@ def items_sliced(items_list, number):
         
     return items_sliced
 
+def edit_single_image(settings, imageobj):
+
+    imageobj.image = imageobj.image.resize(size=(settings['width'], settings['height'])).convert("RGBA")
+
+    # Set the background color, which depends on the rarity of the item
+    # The background of images which have no matching background for rarity will stay white
+
+    if imageobj.rarity in settings['rarity_grades']:
+        background = Image.open(settings['rarity_grades'][imageobj.rarity]).resize(size=(settings['width'], settings['height'])).convert('RGBA')
+        imageobj.image = Image.alpha_composite(im1=background, im2=imageobj.image)
+
+
+    # Create gray overlayer (to see name and price better)
+    overlayer = Image.open(settings["overlayer"]).resize(size=(settings["width"], settings["height"])).convert("RGBA")
+    imageobj.image = Image.alpha_composite(im1=imageobj.image, im2=overlayer)
+
+    # Create a pencil and load font
+    draw = ImageDraw.Draw(imageobj.image)
+    font = ImageFont.truetype(font=settings['font_path'], size=settings['text_size'])
+
+    # Draw border
+    draw.rectangle(xy=((0,0), (settings['width'],settings['height'])), outline=settings['border_color'], width=settings['border_width'])
+
+    #  Load vbucks icon
+    vbucks_icon = Image.open(fp=settings['vbucks_img_path']).resize(size=(settings['vbucks_img_size'], settings['vbucks_img_size']))
+    
+    # Specify positions of vbucks image, the price text and the name text
+    name_txt_position = (((settings['width']/2)-(font.getsize(imageobj.name)[0]/2)), \
+                           settings['height']-(settings['height']*settings['overlayer_percentage']-settings["spc_top_overlayer_nametext"]))
+
+    space_on_each_half = (settings["vbucks_img_size"] + settings["spc_vbucksimg_to_pricetext"] + font.getsize(imageobj.price)[0])/2 # The space on each half (width/2) for the price objects
+    price_txt_position = (settings["width"]/2 + (space_on_each_half - font.getsize(imageobj.price)[0]), \
+                          settings['height']-(settings['height']*settings['overlayer_percentage']-settings["spc_top_overlayer_price"]))
+    vbucks_img_position = (int(settings["width"]/2 - space_on_each_half)), \
+                           int(settings['height']-(settings['height']*settings['overlayer_percentage']-(settings["spc_top_overlayer_price"]+5)))
+
+    # Draw vbucks image and price text
+    imageobj.image.paste(im=vbucks_icon, box=vbucks_img_position, mask=vbucks_icon)
+    draw.text(xy=price_txt_position, text=imageobj.price, fill=settings['price_text_color'], font=font)
+    draw.text(xy=name_txt_position, text=imageobj.name, fill=settings['name_text_color'], font=font)
+    
+    return imageobj.image
 
 def imgs_to_rows(settings, img_list): # Converts multiple images to row (with each row containing x images)
     rows = []
@@ -37,66 +80,3 @@ def rows_to_final(settings, rows):
     
     return result_img
 
-def edit_single_image(settings, image):
-    single_image_data.image = single_image_data.image.resize(size=(width,height))
-    
-    x_paste = 0
-    y_paste = 0
-
-    if not os.path.exists(text_font_path):
-        print(f"Font path \'{text_font_path}\' doesn't exist.")
-        sys.exit(1)
-
-    img_elements = Image.new(mode='RGBA', size=(width,height))
-    img_elements.paste(single_image_data.image)
-    # Add v-bucks price for shop item
-    data_box = Image.new(mode='RGBA', size=(width,height))
-    vbucks_icon = Image.open(fp=vbucks_img_path)
-    vbucks_icon = vbucks_icon.resize(size=(text_size,text_size))
-
-    image_position = (spacing_to_side, spacing_to_top_vbucks_image)
-    vbucks_text_position = ((spacing_to_side+vbucks_icon.width+spacing_to_vbucks_image), spacing_to_top_price_text)
-    
-    draw = ImageDraw.Draw(img_elements)
-    font = ImageFont.truetype(font=text_font_path, size=text_size)
-
-    # Draw vbucks image and price text
-    img_elements.paste(im=vbucks_icon, box=image_position)
-    draw.text(xy=vbucks_text_position, text=single_image_data.price, fill=text_color, font=font)
-    
-    # Draw item name according to if there is enough space (will draw every time, just different text size, or with wordwrap)
-    if single_image_data.name:
-        item_name = single_image_data.name
-        spilted_name = item_name.split(' ')
-        name_text_position = {'spacing_to_side': spacing_to_side, 'spacing_to_top':spacing_to_top_name_text}
-
-    for word in spilted_name:
-        if single_image_data.rarity in rarity_grades:
-            text_color_2 = text_color_for_rarity[single_image_data.rarity]
-        else:
-            text_color_2 = default_text_color_for_rarity
-        draw.text(xy=(name_text_position['spacing_to_side'], name_text_position['spacing_to_top']),\
-         text=word, fill=text_color_2, font=font)
-        name_text_position['spacing_to_top'] += text_size
-
-    # Has to be pasted again on a new image so that the mask option works correctly (this type
-    # of bug would only happen on some images (here not anymore (because it was fixed)))
-    
-    # Set background color (dependet on the rarity of the shop item (image))
-    
-    if single_image_data.rarity in rarity_grades:
-        bg_image = Image.new(size=(width, height), mode='RGBA')
-        rarity_bg_img = rarity_grades[single_image_data.rarity]
-        rarity_bg_img = rarity_bg_img.resize(size=(width,height))
-        bg_image.paste(im=rarity_bg_img, box=(0,0))
-    else:
-        rarity_bg_img = bg_not_found_bg
-        bg_image = Image.new(size=(width, height),color=rarity_bg_img, mode='RGBA')
-
-    # Draw border
-    draw = ImageDraw.Draw(bg_image)
-    draw.rectangle(xy=((0,0), (width,height)), outline=border_color, width=2)
-    
-    bg_image.paste(im=img_elements, box=(10,0), mask=img_elements)
-
-    return bg_image
