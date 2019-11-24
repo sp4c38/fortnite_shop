@@ -17,6 +17,7 @@ settings = {
     'name_text_color' : (234,176,50),
     'border_width': 2,
     'border_color' : (255,255,255), # As RGB, RGBA won't work
+    'final_image_color': (0,0,0), # The color empty fields will have on the final image
     'overlayer': os.path.join(BASE_DIR, 'backgrounds', 'overlayer.png'), 
     'overlayer_percentage': 0.32, # The percentage (as decimal number) the overlayer is high in relationship to the heigt of the final picture
     'spc_vbucksimg_to_pricetext': 10, # The space between the vbucks image and the price text
@@ -30,20 +31,6 @@ settings = {
         'legendary': os.path.join(BASE_DIR,'backgrounds','orange_legendary.png'), # orange
     },
 
-    # ! Still needs to implement in program
-    'text_color_for_rarity' : { #
-        'uncommon': (255,215,0), #green
-        'common': (100,0,255), # gray
-        'rare': (255,100,0),  # blue
-        'epic': (100,255,0), # purple
-        'legendary':  (255,0,100), # orange 
-        },
-
-
-    # -----
-    'backups_store_path' : os.path.expanduser(os.path.join('~', 'Documents', 'fortnite_shop', 'backups')), # Where to store backup files
-    # backups_store_path_final : op.expanduser(op.join('~', 'Documents', 'fortnite_shop' , 'backups', '{0}', 'final.png')),
-    # Settings for the final image
-
-
+    'recent_info': os.path.join(BASE_DIR, 'backups', 'recent.info'),
+    'backup_dir': os.path.join(BASE_DIR, 'backups', '{}'), # Where backups shall be stored
 }

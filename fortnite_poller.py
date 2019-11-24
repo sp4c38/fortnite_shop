@@ -1,6 +1,5 @@
 import configparser
 import datetime
-import hashlib
 import requests
 import tempfile
 
@@ -9,6 +8,7 @@ from PIL import Image,ImageDraw,ImageFont
 
 # Import files
 import merge_pictures
+import save_compare_send
 
 from settings import settings
 
@@ -46,7 +46,7 @@ def get_images(config):
         if item['name']:
             image_object.name = item['name']
         
-        print(f"Downloading {image_link}...")
+        print(f"Downloading {image_link}")
 
         image_object.image = Image.open(BytesIO(req.get(url=image_link).content)).convert('RGBA')
         image_object.image = merge_pictures.edit_single_image(settings=settings, imageobj=image_object)
@@ -80,11 +80,21 @@ def get_images(config):
 
 def main():
     config = configparser.ConfigParser() # Don't mix it up with settings 
-    config.read(str(settings['config_file'])) # Settings file stores confidential data
+    config.read(str(settings['config_file'])) # Config file stores confidential data
 
     images = get_images(config=config)
     rows = merge_pictures.imgs_to_rows(img_list=images, settings=settings)
     final_image = merge_pictures.rows_to_final(settings=settings, rows=rows)
 
+    stored_image = save_compare_send.get_stored_image(settings)
+    updated = save_compare_send.compare(recent_image=final_image, stored_image=stored_image)
+    
+    if not updated:
+        print("Same shop.")
+    elif updated:
+        print("Shop updated.")
+        save_compare_send.save_image(settings=settings, image=final_image) # Save final image to backups
+        save_compare_send.send_image(settings=settings, image=final_image) # Send final image via Telegram
+  
 if __name__ == '__main__':
     main()

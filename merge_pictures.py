@@ -70,7 +70,7 @@ def imgs_to_rows(settings, img_list): # Converts multiple images to row (with ea
     return rows
 
 def rows_to_final(settings, rows):
-    result_img = Image.new(mode='RGBA', size=(settings['width']*settings['images_in_row'],settings['height']*len(rows)))
+    result_img = Image.new(mode='RGBA', color=settings['final_image_color'], size=(settings['width']*settings['images_in_row'],settings['height']*len(rows)))
     
     y_paste=0
     
