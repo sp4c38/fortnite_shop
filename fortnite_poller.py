@@ -23,12 +23,12 @@ class ShopItem(): # Can't be named Image because it would overwrite the Image cl
 def get_images(config):
 
     headers = {
-        'x-api-key':config['fnbr_api']['api-key'],
+        'x-api-key':config['fortnite']['api-key'],
     }
 
     req = requests.Session() # requests only needed in this function
 
-    data = req.get(url=config['fnbr_api']['request_url'], headers=headers).json()
+    data = req.get(url=config['fortnite']['request_url'], headers=headers).json()
 
     imageobjs = [] # A list with all Image object
 
