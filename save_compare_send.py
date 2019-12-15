@@ -49,10 +49,8 @@ def save_image(settings, image):
     with open(settings["recent_info"], "w") as file:
         recent_info.write(file)
 
-def send_image(settings, image):
-    config = configparser.ConfigParser()
-    config.read(settings["config_file"])
-
+def send_image(config, image):
+    print("Sending image...")
     url = config["telegram"]["send_photo_url"]
 
     my_memory = io.BytesIO()
@@ -63,6 +61,19 @@ def send_image(settings, image):
     }
     files = {
         'photo': my_memory.getvalue(),
+    }
+
+    requests.post(url=url, data=data, files=files)
+
+def send_video(config, vid_dest):
+    print("Sending video...")
+    url = config["telegram"]["send_video_url"]
+
+    data = {
+        "chat_id":config["telegram"]["chat_id"],
+    }
+    files = {
+        "video": open(vid_dest, "rb").read(), 
     }
 
     requests.post(url=url, data=data, files=files)
