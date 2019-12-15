@@ -5,10 +5,17 @@ from PIL import Image, ImageDraw, ImageFont
 
 def items_sliced(items_list, number): 
     items_sliced = []
+    pointer = 0
+    stop = False
+    
+    
+    while stop == False:
+        if not items_list[pointer:pointer+number]:
+            stop = True
+        else:
+            items_sliced.append(items_list[pointer:pointer+number]) 
+            pointer += number
 
-    while len(items_list) > 0:
-        items_sliced.append([items_list.pop(items_list.index(item)) for item in items_list[:number]])
-        
     return items_sliced
 
 def edit_single_image(settings, imageobj):

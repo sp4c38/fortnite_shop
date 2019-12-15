@@ -8,6 +8,7 @@ settings = {
     'config_file': os.path.join(BASE_DIR, 'config', 'config.ini'), # Where config file is stored
     'vbucks_img_path' : os.path.join(BASE_DIR, 'vbucks_icon', 'icon_vbucks.png'),
     'vbucks_img_size': 38, # Tells how long one side of the vbucks image is, vbucks image is processed as a square
+    'video_cache_path': os.path.join(BASE_DIR, 'vid_cache'), # In this dir videos are shortly stored during executions of the programm
     'font_path' : os.path.join(BASE_DIR, 'fonts', 'fortnite-font.ttf'), # The font .ttf file
     'images_in_row' : 4, # 
     'width':512, # Width of each individual image
