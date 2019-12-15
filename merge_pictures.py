@@ -28,7 +28,9 @@ def edit_single_image(settings, imageobj):
     if imageobj.rarity in settings['rarity_grades']:
         background = Image.open(settings['rarity_grades'][imageobj.rarity]).resize(size=(settings['width'], settings['height'])).convert('RGBA')
         imageobj.image = Image.alpha_composite(im1=background, im2=imageobj.image)
-
+    else:
+        background = Image.open(settings['rarity_grades']['not_found_bg']).resize(size=(settings['width'], settings['height'])).convert('RGBA')
+        imageobj.image = Image.alpha_composite(im1=background, im2=imageobj.image)
 
     # Create gray overlayer (to see name and price better)
     overlayer = Image.open(settings["overlayer"]).resize(size=(settings["width"], settings["height"])).convert("RGBA")

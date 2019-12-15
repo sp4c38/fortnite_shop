@@ -25,6 +25,8 @@ settings = {
     'spc_top_overlayer_nametext': 20, # The space between the top edge of the overlayer and the upper side of the name text
     'spc_top_overlayer_price': 85, # The space between the top edge of the overlayer and the upper side of the price objects
     'rarity_grades' : { # Background color matches rarity
+        'not_found_bg': os.path.join(BASE_DIR, 'backgrounds', 'not_found_bg.png'), # background for not found rarity grades
+        'star_wars': os.path.join(BASE_DIR, 'backgrounds', 'star_wars.png'),
         'uncommon': os.path.join(BASE_DIR,'backgrounds','green_uncommon.png'), #green
         'common':os.path.join(BASE_DIR,'backgrounds','gray_common.png'), # gray
         'rare': os.path.join(BASE_DIR,'backgrounds','blue_rare.png'), # blue
