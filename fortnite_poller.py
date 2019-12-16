@@ -57,6 +57,7 @@ def get_images(config):
         image_object.image = merge_pictures.edit_single_image(settings=settings, imageobj=image_object)
 
         if item["history"]["occurrences"] == 1: # Only checks for video if item occured 1 time (this time is also counted)
+            save_compare_send.send_message(config=config, message=f"Found item with one occurrence (featured): {item['name']}")
             video  = get_videos.find_video(item=item, req_session=req, config=config)
             if video:
                 image_object.video = get_videos.get_video(item=item, url=video, settings=settings)
@@ -83,6 +84,7 @@ def get_images(config):
         print(f"Downloading {image_link}...")
 
         if item["history"]["occurrences"] == 1: # Only checks for video if item occured 1 time (this time is also counted)
+            save_compare_send.send_message(config=config, message=f"Found item with one occurrence (daily): {item['name']}")
             video  = get_videos.find_video(item=item, req_session=req, config=config)
             if video:
                 image_object.video = get_videos.get_video(item=item, url=video, settings=settings)
