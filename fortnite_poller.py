@@ -1,3 +1,4 @@
+import arrow
 import configparser
 import datetime
 import requests
@@ -31,6 +32,7 @@ def get_images(config):
     req = requests.Session() # requests only needed in this function
 
     data = req.get(url=config['fortnite']['request_url'], headers=headers).json()
+    date = arrow.get(data['data']['date']).format("HH:mm D.M.YYYY") # Time shop is from
 
     imageobjs = [] # A list with all Image object
 
@@ -94,14 +96,14 @@ def get_images(config):
 
     req.close()
 
-    return imageobjs
+    return date, imageobjs
 
 
 def main():
     config = configparser.ConfigParser() # Don't mix it up with settings 
     config.read(str(settings['config_file'])) # Config file stores confidential data
 
-    images = get_images(config=config)
+    date, images = get_images(config=config)
     imgsliced = merge_pictures.items_sliced(items_list=images, number=settings['images_in_row'])
     rows = merge_pictures.imgs_to_rows(img_list=imgsliced, settings=settings)
     final_image = merge_pictures.rows_to_final(settings=settings, rows=rows)
@@ -112,7 +114,8 @@ def main():
     if not updated:
         print("Same shop.")
     elif updated:
-        print("Shop updated.")
+    #     print("Shop updated.")
+        save_compare_send.send_message(config=config, message=f"Shop von: {date}")
         save_compare_send.save_image(settings=settings, image=final_image) # Save final image to backups
         save_compare_send.send_image(config=config, image=final_image) # Send final image via Telegram
         for img in images:
