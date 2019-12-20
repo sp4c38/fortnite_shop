@@ -56,14 +56,6 @@ def get_images(config):
         image_object.image = Image.open(BytesIO(req.get(url=image_link).content)).convert('RGBA')
         image_object.image = merge_pictures.edit_single_image(settings=settings, imageobj=image_object)
 
-        if item["history"]["occurrences"] == 1: # Only checks for video if item occured 1 time (this time is also counted)
-            save_compare_send.send_message(config=config, message=f"Found item with one occurrence (featured): {item['name']}")
-            video  = get_videos.find_video(item=item, req_session=req, config=config)
-            if video:
-                image_object.video = get_videos.get_video(item=item, url=video, settings=settings)
-            else:
-                image_object.video = None
-
         imageobjs.append(image_object)
 
     for item in data['data']['daily']: # Daily items, mostly not multiple days in shop
@@ -82,14 +74,6 @@ def get_images(config):
             image_object.name = item['name']
 
         print(f"Downloading {image_link}...")
-
-        if item["history"]["occurrences"] == 1: # Only checks for video if item occured 1 time (this time is also counted)
-            save_compare_send.send_message(config=config, message=f"Found item with one occurrence (daily): {item['name']}")
-            video  = get_videos.find_video(item=item, req_session=req, config=config)
-            if video:
-                image_object.video = get_videos.get_video(item=item, url=video, settings=settings)
-            else:
-                image_object.video = None
 
         image_object.image = Image.open(BytesIO(req.get(url=image_link).content))
         image_object.image = merge_pictures.edit_single_image(settings=settings, imageobj=image_object)
@@ -121,12 +105,6 @@ def main():
         save_compare_send.save_image(settings=settings, image=final_image) # Save final image to backups
         save_compare_send.send_image(config=config, image=final_image) # Send final image via Telegram
         
-    # if not video_updated:
-    #     print("Same shop.")
-    # elif video_updated:
-    #     for img in images:
-    #         if img.video:
-    #             save_compare_send.send_video(config=config, vid_dest=img.video)
   
 if __name__ == '__main__':
     main()
