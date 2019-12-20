@@ -111,18 +111,22 @@ def main():
     final_image = merge_pictures.rows_to_final(settings=settings, rows=rows)
 
     stored_image = save_compare_send.get_stored_image(settings=settings)
-    updated = save_compare_send.compare(recent_image=final_image, stored_image=stored_image)
+    image_updated = save_compare_send.compare_image(recent_image=final_image, stored_image=stored_image)
     
-    if not updated:
+    if not image_updated:
         print("Same shop.")
-    elif updated:
-    #     print("Shop updated.")
+    elif image_updated:
+        print("Shop updated.")
         save_compare_send.send_message(config=config, message=f"Shop von: {date}")
         save_compare_send.save_image(settings=settings, image=final_image) # Save final image to backups
         save_compare_send.send_image(config=config, image=final_image) # Send final image via Telegram
-        for img in images:
-            if img.video:
-                save_compare_send.send_video(config=config, vid_dest=img.video)
+        
+    # if not video_updated:
+    #     print("Same shop.")
+    # elif video_updated:
+    #     for img in images:
+    #         if img.video:
+    #             save_compare_send.send_video(config=config, vid_dest=img.video)
   
 if __name__ == '__main__':
     main()

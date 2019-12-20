@@ -24,7 +24,7 @@ def get_stored_image(settings):
         return Image.open(recent_stored_file)
 
 
-def compare(recent_image, stored_image):
+def compare_image(recent_image, stored_image):
     # Return True if image changed and False if image hasn't changed
 
     if stored_image == None:
