@@ -8,9 +8,10 @@ from io import BytesIO
 from PIL import Image,ImageDraw,ImageFont
 
 # Import files
-import get_videos
+import image
+import video
+import telegram
 import merge_pictures
-import save_compare_send
 
 from settings import settings
 
@@ -56,11 +57,11 @@ def get_images(config):
         image_object.image = merge_pictures.edit_single_image(settings=settings, imageobj=image_object)
 
         if item["history"]["occurrences"] == 1: # Only checks for video if item occured 1 time (this time is also counted)
-            video  = get_videos.find_video(item=item, req_session=req, config=config)
-            if video:
-                image_object.video = get_videos.get_video(item=item, url=video, settings=settings)
-            else:
-                image_object.video = None
+            download_url = video.find_video(item=item, req_session=req, config=config)
+
+            if download_url:
+                # Returns a path to the video if it is new, returns False if it is not new
+                image_object.video = video.check_save_video(item=item, url=download_url, settings=settings)
 
         imageobjs.append(image_object)
 
@@ -79,14 +80,14 @@ def get_images(config):
         if item['name']:
             image_object.name = item['name']
 
-        print(f"Downloading {image_link}...")
+        print(f"Downloading {image_link}")
 
-        # if item["history"]["occurrences"] == 1: # Only checks for video if item occured 1 time (this time is also counted)
-        #     video  = get_videos.find_video(item=item, req_session=req, config=config)
-        #     if video:
-        #         image_object.video = get_videos.get_video(item=item, url=video, settings=settings)
-        #     else:
-        #         image_object.video = None
+        if item["history"]["occurrences"] == 1: # Only checks for video if item occured 1 time (this time is also counted)
+            download_url = video.find_video(item=item, req_session=req, config=config)
+
+            if download_url:
+                # Returns a path to the video if it is new, returns False if it is not new
+                image_object.video = video.check_save_video(item=item, url=download_url, settings=settings)
 
         image_object.image = Image.open(BytesIO(req.get(url=image_link).content))
         image_object.image = merge_pictures.edit_single_image(settings=settings, imageobj=image_object)
@@ -102,28 +103,26 @@ def main():
     config = configparser.ConfigParser() # Don't mix it up with settings 
     config.read(str(settings['config_file'])) # Config file stores confidential data
 
-    date, images = get_images(config=config)
-    imgsliced = merge_pictures.items_sliced(items_list=images, number=settings['images_in_row'])
-    rows = merge_pictures.imgs_to_rows(img_list=imgsliced, settings=settings)
-    final_image = merge_pictures.rows_to_final(settings=settings, rows=rows)
+    date, data_obj = get_images(config=config)
+    objsplit = merge_pictures.items_split(items_list=data_obj, number=settings['images_in_row'])
+    rowimgs = merge_pictures.imgs_to_rows(img_list=objsplit, settings=settings)
+    final_image = merge_pictures.rows_to_final(settings=settings, rows=rowimgs)
 
-    stored_image = save_compare_send.get_stored_image(settings=settings)
-    image_updated = save_compare_send.compare_image(recent_image=final_image, stored_image=stored_image)
+    stored_image = image.get_stored_image(settings=settings)
+    image_updated = image.image_changed(now_img=final_image, strd_img=stored_image)
     
-    if not image_updated:
-        print("Same shop.")
-    elif image_updated:
-        print("Shop updated.")
-        save_compare_send.send_message(config=config, message=f"Shop von: {date}")
-        save_compare_send.save_image(settings=settings, image=final_image) # Save final image to backups
-        save_compare_send.send_image(config=config, image=final_image) # Send final image via Telegram
-        
-    # if not video_updated:
-    #     print("Same shop.")
-    # elif video_updated:
-    #     for img in images:
-    #         if img.video:
-    #             save_compare_send.send_video(config=config, vid_dest=img.video)
+    if image_updated:
+        print("Shop image updated.")
+        telegram.send_message(config=config, message=f"Shop von: {date}") # A message, with the date the shop is from
+        image.save_image(settings=settings, image=final_image) # Save final image to backups
+        telegram.send_image(config=config, image=final_image) # Send final image via Telegram
+    elif not image_updated:
+        print("Same image.")
+    
+    for shopobj in data_obj:
+        if shopobj.video:
+            print(f"A video for \"{shopobj.name}\" was found.")
+            telegram.send_video(config=config, vid_path=shopobj.video)
   
 if __name__ == '__main__':
     main()
