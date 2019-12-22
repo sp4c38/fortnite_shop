@@ -3,7 +3,7 @@
 from PIL import Image, ImageDraw, ImageFont
 
 
-def items_sliced(items_list, number): 
+def items_split(items_list, number): 
     items_sliced = []
     pointer = 0
     stop = False
