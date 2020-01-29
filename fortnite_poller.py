@@ -1,9 +1,11 @@
+# normal imports (sorted alphabetical)
 import arrow
 import configparser
 import datetime
 import requests
 import tempfile
 
+# from... imports
 from io import BytesIO
 from PIL import Image,ImageDraw,ImageFont
 
@@ -62,6 +64,7 @@ def get_images(config):
             if download_url:
                 # Returns a path to the video if it is new, returns False if it is not new
                 image_object.video = video.check_save_video(item=item, url=download_url, settings=settings)
+
 
         imageobjs.append(image_object)
 
