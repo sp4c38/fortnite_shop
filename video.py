@@ -31,9 +31,11 @@ def check_save_video(item, url, settings):
     destination_path_beforetrimming = os.path.join(destination_dir, f"trim_me.mp4")
     destination_path_final = os.path.join(destination_dir, f"{item['id']}.mp4")
 
-    if os.path.isfile(destination_path):
+    if os.path.isfile(destination_path_final):
+        print(f"Video {destination_path_final} already exists.")
         return False
-    elif not os.path.isfile(destination_path):
+
+    elif not os.path.isfile(destination_path_final):
         os.makedirs(destination_dir, exist_ok=True)
         ydl_opts = {
             "format":"mp4",
