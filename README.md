@@ -4,3 +4,5 @@
 
 Here is a example of how the output image could look like:
 ![example_output_image.jpg](https://github.com/sp4c38/fortnite_shop/blob/master/example_output_image.jpg)
+
+Btw the tokens and api keys from the first commits which I accidentally commited won't work. 😉
