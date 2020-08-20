@@ -35,7 +35,6 @@ def get_images(config):
     req = requests.Session() # requests only needed in this function
 
     data = req.get(url=config['fortnite']['request_url'], headers=headers).json()
-    date = arrow.get(data['data']['date']).format("HH:mm D.M.YYYY") # Time shop is from
 
     imageobjs = [] # A list with all Image object
 
@@ -100,25 +99,26 @@ def get_images(config):
 
     req.close()
 
-    return date, imageobjs
+    return imageobjs
 
 
 def main():
     config = configparser.ConfigParser() # Don't mix it up with settings 
     config.read(str(settings['config_file'])) # Config file stores confidential data
 
-    date, data_obj = get_images(config=config)
+    data_obj = get_images(config=config)
     objsplit = merge_pictures.items_split(items_list=data_obj, number=settings['images_in_row'])
     rowimgs = merge_pictures.imgs_to_rows(img_list=objsplit, settings=settings)
     final_image = merge_pictures.rows_to_final(settings=settings, rows=rowimgs)
 
-    stored_image = image.get_stored_image(settings=settings)
-    image_updated = image.image_changed(now_img=final_image, strd_img=stored_image)
-    
+    now_names = [str(x.name) for x in data_obj]
+    stored_names = image.get_stored_backup(settings=settings) 
+
+    image_updated = image.image_changed(now_data=now_names, stored_data=stored_names)
+       
     if image_updated:
         print("Shop image updated.")
-        telegram.send_message(config=config, message=f"Shop von: {date}") # A message, with the date the shop is from
-        image.save_image(settings=settings, image=final_image) # Save final image to backups
+        image.save_image(settings=settings, image=final_image, names=now_names) # Save final image to backups
         telegram.send_image(config=config, image=final_image) # Send final image via Telegram
     elif not image_updated:
         print("Same image.")

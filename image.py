@@ -6,36 +6,32 @@ import requests
 
 from PIL import Image
 
-def get_stored_image(settings):
+def get_stored_backup(settings):
     # Returns the most recent stored image as a PIL.Image object
     # The path to the most recent stored image is stored in a recent.info file (can also be named different)
 
     recent_info = configparser.ConfigParser()
     recent_info.read(str(settings["recent_info"]))
-    recent_stored_img_path = recent_info['recent_stored_files']['rct_srd_image']
-
-    if not recent_stored_img_path:
+    recent_stored_img_names = [str(x) for x in recent_info['recent_stored_files']['rct_srd_image_names'].split(",")]
+    
+    if not recent_stored_img_names:
         return None
     else:
-        try:
-            return Image.open(recent_stored_img_path)
-        except:
-            return None
+        return recent_stored_img_names
 
 
-def image_changed(now_img, strd_img):
-    # now_img and strd_img must be a PIL.Image object
-    # Checks if now_img is different from strd_img, returns True if this is the case and False if not
+def image_changed(now_data, stored_data):
+    # The program backup system works, with looking at the names from the last saved backup
+    # and comparing them with the names from the stored_data
 
-    if strd_img == None:
-        return True
-
-    if now_img.tobytes() == strd_img.tobytes():
+    # This is better than comparing a stored image with the current created image -> this can easily lead to mistakes in recognizing changes
+ 
+    if now_data == stored_data:
         return False
-    elif now_img.tobytes() != strd_img.tobytes():
+    else:
         return True
 
-def save_image(settings, image):
+def save_image(settings, image, names):
     # Uses UTC timezone
     backup_dir = settings["img_backup_dir"].format(arrow.utcnow().format("DD-MM-YYYY"))
     backup_path = os.path.join(backup_dir, "final.png")
@@ -46,7 +42,7 @@ def save_image(settings, image):
     recent_info = configparser.ConfigParser()
     recent_info.read(str(settings["recent_info"]))
 
-    recent_info["recent_stored_files"]["rct_srd_image"] = backup_path
+    recent_info["recent_stored_files"]["rct_srd_image_names"] = ",".join(names)
 
     with open(settings["recent_info"], "w") as file:
         recent_info.write(file)
